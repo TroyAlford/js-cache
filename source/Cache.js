@@ -4,7 +4,7 @@ const MAXAGE = Symbol('maxAge')
 const MAXSIZE = Symbol('maxSize')
 
 export const DEFAULTS = {
-  maxAge: Infinity,  // Milliseconds before key expiration/drop
+  maxAge:  Infinity, // Milliseconds before key expiration/drop
   maxSize: Infinity, // Max # of cached keys (drops Least Recently Used)
 }
 
@@ -20,9 +20,10 @@ export default class Cache {
     this.maxAge = options.maxAge
     this.maxSize = options.maxSize
 
-    this[Symbol.iterator] = function*() {
-      for (let key of this[QUEUE]) {
-        let { value } = this[MAP].get(key)
+    this[Symbol.iterator] = function* iterator() {
+      // eslint-disable-next-line no-restricted-syntax
+      for (const key of this[QUEUE]) {
+        const { value } = this[MAP].get(key)
         yield { key, value }
       }
     }
@@ -40,9 +41,11 @@ export default class Cache {
 
     this.enforceMaxSize()
     this.expireKey(key, this.maxAge)
+
+    return this[MAP].get(key)
   }
   drop(key) {
-    if (!key) return;
+    if (!key) return
 
     if (this.maxAge !== Infinity && this[MAP].has(key)) {
       clearTimeout(this[MAP].get(key).timeout)
@@ -69,7 +72,7 @@ export default class Cache {
   }
   expireKey(key, ms = this.maxAge) {
     const hash = this[MAP].get(key)
-    if (!hash) return;
+    if (!hash) return
 
     if (hash.timeout) clearTimeout(hash.timeout)
     if (ms < Infinity) hash.timeout = setTimeout(() => this.drop(key), ms)
